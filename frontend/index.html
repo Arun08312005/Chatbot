@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Simple Chatbot</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .chat-container {
+      width: 90%;
+      max-width: 600px;
+      height: 85vh;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .chat-header {
+      padding: 15px;
+      background: #4a90e2;
+      color: #fff;
+      font-size: 1.2rem;
+      font-weight: bold;
+      border-radius: 10px 10px 0 0;
+      text-align: center;
+    }
+
+    .messages {
+      flex: 1;
+      padding: 15px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: #fafafa;
+    }
+
+    .msg {
+      display: flex;
+    }
+    .bubble {
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      max-width: 70%;
+      word-wrap: break-word;
+    }
+
+    .user .bubble {
+      margin-left: auto;
+      background: #d1ecf1;
+      color: #0c5460;
+    }
+    .assistant .bubble {
+      margin-right: auto;
+      background: #e2e3e5;
+      color: #383d41;
+    }
+
+    .input-area {
+      display: flex;
+      padding: 10px;
+      border-top: 1px solid #ddd;
+      background: #fff;
+    }
+
+    .input-area input {
+      flex: 1;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+      outline: none;
+    }
+
+    .input-area button {
+      margin-left: 10px;
+      background: #4a90e2;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      padding: 10px 16px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .input-area button:hover {
+      background: #357abd;
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <div class="chat-header">Simple Chatbot</div>
+    <div class="messages" id="messages"></div>
+    <form class="input-area" id="chatForm" autocomplete="off">
+      <input id="chatInput" type="text" placeholder="Type your message..." />
+      <button type="submit">Send</button>
+    </form>
+  </div>
+
+  <script>
+    const messagesDiv = document.getElementById("messages");
+    const chatForm = document.getElementById("chatForm");
+    const chatInput = document.getElementById("chatInput");
+
+    let messages = [{ role: "system", content: "You are a simple AI assistant." }];
+
+    function renderMessages() {
+      messagesDiv.innerHTML = '';
+      messages.filter(m => m.role !== "system").forEach(m => {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = 'msg ' + m.role;
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble';
+        bubble.textContent = m.content;
+        msgDiv.appendChild(bubble);
+        messagesDiv.appendChild(msgDiv);
+      });
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    renderMessages();
+
+    chatForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const input = chatInput.value.trim();
+      if (!input) return;
+
+      const userMessage = { role: "user", content: input };
+      messages.push(userMessage);
+      renderMessages();
+      chatInput.value = '';
+
+      try {
+        const resp = await fetch("http://localhost:5000/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ messages })
+        });
+        const data = await resp.json();
+        messages.push(data);
+        renderMessages();
+      } catch (err) {
+        messages.push({ role: "assistant", content: "⚠️ Error contacting server" });
+        renderMessages();
+      }
+    });
+  </script>
+</body>
+</html>
